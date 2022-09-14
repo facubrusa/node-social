@@ -1,20 +1,28 @@
 const express = require("express");
 
+const secure = require('./secure');
 const response = require("../../../network/response");
 const Controller = require("./index");
 
 const router = express.Router();
 
-router.get("/", async function (req, res) {
+// Routes
+router.get('/', list)
+router.get('/:id', get);
+router.post('/', upsert);
+router.put('/:id', secure('update'), update);
+router.delete('/', secure('delete'), remove);
+
+async function list (req, res) {
   try {
     const userList = await Controller.list();
     response.success(req, res, userList, 200);
   } catch (error) {
     response.error(req, res, error.message, 500);
   }
-});
+}
 
-router.get("/:id", async function (req, res) {
+async function get(req, res) {
   try {
     const { id } = req.params;
     if (!id) {
@@ -30,24 +38,37 @@ router.get("/:id", async function (req, res) {
   } catch (error) {
     response.error(req, res, error.message, 500);
   }
-});
+};
 
-router.post("/", async function (req, res) {
+async function update(req, res) {
   try {
-    console.log(req);
-    const { name } = req.body;
-    if (!name) {
-      response.error(req, res, 'name is required', 400);
+    const { id } = req.params;
+    if (!id) {
+      response.error(req, res, 'Request error', 400);
       return;
     }
-    const newUser = await Controller.insert(name);
-    response.success(req, res, newUser, 200);
+    const editUser = await Controller.update(req.body, id);
+    response.success(req, res, editUser, 201);
   } catch (error) {
     response.error(req, res, error.message, 500);
   }
-});
+};
 
-router.delete("/:id", async function (req, res) {
+async function upsert(req, res) {
+  try {
+    const { name, username, password } = req.body;
+    if (!name || !username || !password) {
+      response.error(req, res, 'Request error', 400);
+      return;
+    }
+    const newUser = await Controller.upsert(req.body);
+    response.success(req, res, newUser, 201);
+  } catch (error) {
+    response.error(req, res, error.message, 500);
+  }
+};
+
+async function remove(req, res) {
   try {
     const { id } = req.params;
     if (!id) {
@@ -60,10 +81,10 @@ router.delete("/:id", async function (req, res) {
       return;
     }
     await Controller.delete(id);
-    response.success(req, res, user, 200);
+    response.success(req, res, user, 201);
   } catch (error) {
     response.error(req, res, error.message, 500);
   }
-});
+};
 
 module.exports = router;

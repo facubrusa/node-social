@@ -1,28 +1,55 @@
-const TABLE = 'user';
+const { nanoid } = require('nanoid');
+const auth = require('../auth');
 
-module.exports = function(injectedStore) {
-    // if the recived store is null, get a common store
-    const store = injectedStore ? injectedStore : require('../../../store/dummy');
-    function list() {
-        return store.list(TABLE);
-    }
+const TABLA = 'user';
 
-    function get(id) {
-        return store.get(TABLE, id);
-    }
+module.exports = function (injectedStore) {
+  let store = injectedStore;
+  if (!store) {
+    store = require('../../../store/dummy');
+  }
 
-    function insert(name) {
-        return store.insert(TABLE, name);
-    }
+  function list() {
+    return store.list(TABLA);
+  }
 
-    function remove(id) {
-        return store.remove(TABLE, id);
-    }
+  function get(id) {
+    return store.get(TABLA, id);
+  }
 
-    return {
-        list,
-        get,
-        insert,
-        remove,
+  async function update(body, id) {
+    const { name } = body;
+    // We can just edit the name
+    const editUser = {
+      id,
+      name,
     };
+
+    return store.update(TABLA, editUser);
+  }
+
+  async function upsert(body) {
+    const { name, username, password } = body;
+    const id = nanoid();
+    const user = {
+      id,
+      name,
+      username,
+    };
+
+    await auth.upsert({
+      id,
+      username,
+      password,
+    });
+
+    return store.upsert(TABLA, user);
+  }
+
+  return {
+    list,
+    get,
+    upsert,
+    update,
+  };
 };
