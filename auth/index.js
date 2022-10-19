@@ -4,7 +4,6 @@ const error = require('../utils/error');
 const secret = config.jwt.secret;
 
 function sign(data) {
-  console.log(config.jwt);
   return jwt.sign(data, secret);
 }
 
@@ -21,6 +20,9 @@ const check = {
     req.user = decoded;
     return decoded;
   },
+  logged: function (req) {
+    decodeHeader(req);
+  }
 };
 
 function getToken(auth) {

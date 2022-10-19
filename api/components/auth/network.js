@@ -9,7 +9,7 @@ router.post('/login', async function (req, res) {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
-      response.error(req, res, 'Request error', 400);
+      return response.error(req, res, 'Request error', 400);
     }
     const token = await Controller.login(username, password);
     response.success(req, res, token, 200);

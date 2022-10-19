@@ -1,0 +1,19 @@
+services:
+    mysql:
+        image: mysql:8
+        environment:
+            - MYSQL_DATABASE=node_social
+            - MYSQL_USER=
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_PORT=3306
+        ports:
+            - 3306:3306
+        volumes:
+            - ./mysql_data:/var/lib/mysql
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - PMA_HOST=mysql
+        ports:
+            - 8080:80
