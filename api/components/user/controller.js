@@ -21,12 +21,12 @@ module.exports = function (injectedStore) {
   async function update(body, id) {
     const { name } = body;
     // We can just edit the name
-    const editUser = {
+    const data = {
       id,
       name,
     };
 
-    return store.update(TABLE, editUser);
+    return store.update(TABLE, id, data);
   }
 
   async function upsert(body) {
@@ -62,12 +62,20 @@ module.exports = function (injectedStore) {
     return await store.insert(TABLE + '_follow', data);
   }
 
+  async function following(user) {
+    const join = {};
+    join[TABLE] = 'user_to'; // { user: user_to }
+    const query = { user_from: user };
+    return await store.query(TABLE + '_follow', query, join);
+  }
+
   return {
     list,
     get,
     upsert,
     update,
     remove,
-    follow
+    follow,
+    following
   };
 };

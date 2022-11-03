@@ -1,5 +1,4 @@
 const express = require("express");
-const secure = require('./secure');
 const response = require("../../../network/response");
 const Controller = require("./index");
 
@@ -8,17 +7,15 @@ const router = express.Router();
 // Routes
 router.get('/', list)
 router.get('/:id', get);
-router.get('/:id/following', following);
 router.post('/', upsert);
-router.post('/follow/:id', secure('follow'), follow);
-router.put('/:id', secure('update'), update);
-router.delete('/:id', secure('delete'), remove);
+router.put('/:id', update);
+router.delete('/:id', remove);
 
 // Internal functions
 async function list (req, res, next) {
   try {
-    const userList = await Controller.list();
-    response.success(req, res, userList, 200);
+    const posts = await Controller.list();
+    response.success(req, res, posts, 200);
   } catch (error) {
     next(error);
   }
@@ -32,7 +29,7 @@ async function get(req, res, next) {
     }
     const user = await Controller.get(id);
     if (!user) {
-      return response.error(req, res, 'User not found', 404);
+      return response.error(req, res, 'Post not found', 404);
     }
     response.success(req, res, user, 200);
   } catch (error) {
@@ -48,7 +45,7 @@ async function update(req, res, next) {
     }
     const user = await Controller.get(id);
     if (!user) {
-      return response.error(req, res, 'User not found', 404);
+      return response.error(req, res, 'Post not found', 404);
     }
     const editUser = await Controller.update(req.body, id);
     response.success(req, res, editUser, 201);
@@ -59,38 +56,21 @@ async function update(req, res, next) {
 
 async function upsert(req, res, next) {
   try {
-    const { name, username, password } = req.body;
-    if (!name || !username || !password) {
+    const { text, user } = req.body;
+    if (!text || !user) {
       return response.error(req, res, 'Request error', 400);
     }
-    const newUser = await Controller.upsert(req.body);
-    response.success(req, res, newUser, 201);
+    const userExist = await Controller.getUser('user', user);
+    if (!userExist) {
+      return response.error(req, res, 'User not found', 404);
+    }
+    console.log(userExist);
+    const newPost = await Controller.upsert(req.body);
+    response.success(req, res, newPost, 201);
   } catch (error) {
     next(error);
   }
 };
-
-async function follow(req, res, next) {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return response.error(req, res, 'Request error', 400);
-    }
-    if (req.user.id === id) {
-      return response.error(req, res, 'User cannot follow himself', 400);
-    }
-
-    const userTo = await Controller.get(id);
-    if (!userTo) {
-      return response.error(req, res, 'User not found', 404);
-    }
-
-    const newFollow = await Controller.follow(req.user.id, id);
-    response.success(req, res, newFollow, 201);
-  } catch (error) {
-    next(error);
-  }
-}
 
 async function remove(req, res, next) {
   try {
@@ -100,7 +80,7 @@ async function remove(req, res, next) {
     }
     const user = await Controller.get(id);
     if (!user) {
-      return response.error(req, res, 'User not found', 404);
+      return response.error(req, res, 'Post not found', 404);
     }
     await Controller.remove(id);
     response.success(req, res, user, 201);
@@ -108,22 +88,5 @@ async function remove(req, res, next) {
     next(error);
   }
 };
-
-async function following(req, res, next) {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return response.error(req, res, 'id is required', 400);
-    }
-    const user = await Controller.get(id);
-    if (!user) {
-      return response.error(req, res, 'User not found', 404);
-    }
-    const following = await Controller.following(id);
-    response.success(req, res, following, 200);
-  } catch (error) {
-    next(error);
-  }
-}
 
 module.exports = router;

@@ -17,7 +17,7 @@ function handleCon() {
     if (err) {
       console.error('[db err]', err);
       console.log('Retrying to connect database');
-      setTimeout(handleCon, 5000);
+      setTimeout(handleCon, 10000);
     } else {
       console.log('DB Connected!');
     }
@@ -35,7 +35,7 @@ function handleCon() {
 
 handleCon();
 
-function list(table, id) {
+function list(table) {
   return new Promise((resolve, reject) => {
     connection.query(`SELECT * FROM ${table}`, (err, data) => {
       if (err) return reject(err);
@@ -75,9 +75,19 @@ function update(table, data) {
   });
 }
 
-function query(table, query) {
+function query(table, query, join) {
+  let joinQuery = '';
+  if (join) {
+    const key = Object.keys(join)[0];
+    const val = join[key];
+    joinQuery = `JOIN ${key} ON ${table}.${val} = ${key}.id`;
+  }
+
+  // 'JOIN user ON user_follow.user_to = user.id';
+
   return new Promise((resolve, reject) => {
-    connection.query(`SELECT * FROM ${table} WHERE ?`, query, (err, res) => {
+    connection.query(`SELECT * FROM ${table} ${joinQuery} WHERE ?`, query, (err, res) => {
+      console.log(query);
       if (err) return reject(err);
       resolve(res[0] || null);
     });

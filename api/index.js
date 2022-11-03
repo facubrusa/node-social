@@ -17,4 +17,4 @@ app.use("/api/auth", auth);
 // middlewares
 app.use(errors);
 
-app.listen(port, () => console.log(`Running on port ${port}`));
+app.listen(port, () => console.log(`Api running on port ${port}`));
